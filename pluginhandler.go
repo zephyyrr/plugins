@@ -53,6 +53,12 @@ func (ph *PluginHandler) Handle(pl Plugin) {
 
 }
 
+func (ph *PluginHandler) HandleAll(pls ...Plugin) {
+	for _, pl := range pls {
+		ph.Handle(pl)
+	}
+}
+
 func generatefunc(pl Plugin) (func(), <-chan packet, chan<- struct{}) {
 	ch, closer := make(chan packet), make(chan struct{})
 	return func() {
