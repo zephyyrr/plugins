@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type PluginHandler struct {
+type Handler struct {
 	plugins       plugins
 	closers       map[string]chan<- struct{}
 	subscriptions map[Event]plugins
@@ -15,8 +15,8 @@ type PluginHandler struct {
 
 type plugins map[string]Plugin
 
-func NewHandler() *PluginHandler {
-	return &PluginHandler{
+func NewHandler() *Handler {
+	return &Handler{
 		plugins:       make(plugins),
 		closers:       make(map[string]chan<- struct{}),
 		subscriptions: make(map[Event]plugins),
@@ -29,7 +29,7 @@ type packet struct {
 	Args  Args
 }
 
-func (ph *PluginHandler) Handle(pl Plugin) {
+func (ph *Handler) Handle(pl Plugin) {
 	ph.plugins[pl.Name()] = pl
 
 	for _, sub := range pl.Subscribes() {
@@ -53,7 +53,7 @@ func (ph *PluginHandler) Handle(pl Plugin) {
 
 }
 
-func (ph *PluginHandler) HandleAll(pls ...Plugin) {
+func (ph *Handler) HandleAll(pls ...Plugin) {
 	for _, pl := range pls {
 		ph.Handle(pl)
 	}
@@ -91,7 +91,7 @@ func generatefunc(pl Plugin) (func(), <-chan packet, chan<- struct{}) {
 	}, ch, closer
 }
 
-func (ph *PluginHandler) Unload(pl Plugin) {
+func (ph *Handler) Unload(pl Plugin) {
 	close(ph.closers[pl.Name()])
 	delete(ph.closers, pl.Name())
 
@@ -102,7 +102,7 @@ func (ph *PluginHandler) Unload(pl Plugin) {
 	delete(ph.plugins, pl.Name())
 }
 
-func (ph *PluginHandler) ListenAndServe() error {
+func (ph *Handler) ListenAndServe() error {
 
 	for len(ph.plugins) > 0 {
 		if chosen, recv, ok := reflect.Select(ph.selects); ok {
@@ -122,11 +122,11 @@ func (ph *PluginHandler) ListenAndServe() error {
 	return nil
 }
 
-func (ph PluginHandler) Dispatch(e Event, args Args) error {
+func (ph Handler) Dispatch(e Event, args Args) error {
 	return ph.dispatch("local", e, args)
 }
 
-func (ph PluginHandler) dispatch(identifier string, e Event, args Args) (err error) {
+func (ph Handler) dispatch(identifier string, e Event, args Args) (err error) {
 	for _, plugin := range ph.subscriptions[e] {
 		go func(plugin Plugin) {
 			tmp := plugin.Send(e, args)
