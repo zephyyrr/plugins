@@ -6,21 +6,25 @@ import (
 	"time"
 )
 
-type Handler struct {
+type Manager struct {
 	plugins       plugins
 	closers       map[string]chan<- struct{}
 	subscriptions map[Event]plugins
 	selects       []reflect.SelectCase
+	handler       Handler
 }
 
 type plugins map[string]Plugin
 
-func NewHandler() *Handler {
-	return &Handler{
+// Returns a new plugin Manager ready for use.
+// A default Muxer is installed as the handler
+func NewManager() *Manager {
+	return &Manager{
 		plugins:       make(plugins),
 		closers:       make(map[string]chan<- struct{}),
 		subscriptions: make(map[Event]plugins),
 		selects:       make([]reflect.SelectCase, 0, 16),
+		handler:       make(mapMuxr),
 	}
 }
 
@@ -29,7 +33,7 @@ type packet struct {
 	Args  Args
 }
 
-func (ph *Handler) Handle(pl Plugin) {
+func (ph *Manager) Handle(pl Plugin) {
 	ph.plugins[pl.Name()] = pl
 
 	for _, sub := range pl.Subscribes() {
@@ -53,10 +57,27 @@ func (ph *Handler) Handle(pl Plugin) {
 
 }
 
-func (ph *Handler) HandleAll(pls ...Plugin) {
+func (ph *Manager) HandleAll(pls ...Plugin) {
 	for _, pl := range pls {
 		ph.Handle(pl)
 	}
+}
+
+func (ph Manager) Handler() Handler {
+	return ph.handler
+}
+
+func (ph Manager) SetHandler(h Handler) {
+	ph.handler = h
+}
+
+//Returns the installed handler if it is a Muxer
+//Otherwise, returns nil
+func (ph Manager) Muxer() Muxer {
+	if muxr, ok := ph.handler.(Muxer); ok {
+		return muxr
+	}
+	return nil
 }
 
 func generatefunc(pl Plugin) (func(), <-chan packet, chan<- struct{}) {
@@ -91,7 +112,7 @@ func generatefunc(pl Plugin) (func(), <-chan packet, chan<- struct{}) {
 	}, ch, closer
 }
 
-func (ph *Handler) Unload(pl Plugin) {
+func (ph *Manager) Unload(pl Plugin) {
 	close(ph.closers[pl.Name()])
 	delete(ph.closers, pl.Name())
 
@@ -102,7 +123,7 @@ func (ph *Handler) Unload(pl Plugin) {
 	delete(ph.plugins, pl.Name())
 }
 
-func (ph *Handler) ListenAndServe() error {
+func (ph *Manager) ListenAndServe() error {
 
 	for len(ph.plugins) > 0 {
 		if chosen, recv, ok := reflect.Select(ph.selects); ok {
@@ -122,11 +143,11 @@ func (ph *Handler) ListenAndServe() error {
 	return nil
 }
 
-func (ph Handler) Dispatch(e Event, args Args) error {
+func (ph Manager) Dispatch(e Event, args Args) error {
 	return ph.dispatch("local", e, args)
 }
 
-func (ph Handler) dispatch(identifier string, e Event, args Args) (err error) {
+func (ph Manager) dispatch(identifier string, e Event, args Args) (err error) {
 	for _, plugin := range ph.subscriptions[e] {
 		go func(plugin Plugin) {
 			tmp := plugin.Send(e, args)
