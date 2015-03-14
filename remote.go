@@ -22,6 +22,11 @@ type PluginDecl struct {
 	Formats    []Format `json:"formats"`
 }
 
+type formatResponse struct {
+	Error  Error `json:"error,omitempty"`
+	Format `json:"format"`
+}
+
 type Format string
 
 var (
@@ -57,17 +62,29 @@ func NewRemotePlugin(r io.ReadCloser, w io.WriteCloser) (pl *RemotePlugin, err e
 
 	//Pack reader in JSON decoder and decode a PluginDecl
 	dec := json.NewDecoder(r)
+	enc := json.NewEncoder(w)
+
 	err = dec.Decode(&pl.PluginDecl)
 	if err != nil {
 		return
 	}
 
 	var best FormatFactory = FormatFactory{-1, nil}
+	var bestFormat Format = ""
 	for _, format := range pl.PluginDecl.Formats {
 		if factory, ok := SupportedFormats[format]; ok && factory.Weight > best.Weight {
 			best = factory
+			bestFormat = format
 		}
 	}
+
+	if bestFormat == "" {
+		enc.Encode(formatResponse{Error: NoSupportedFormat})
+		err = NoSupportedFormat
+		return
+	}
+
+	enc.Encode(formatResponse{Format: bestFormat})
 
 	pl.enc, pl.dec = best.Construct(r, w)
 	return
