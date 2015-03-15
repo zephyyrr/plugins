@@ -20,8 +20,8 @@ When ever something happens in your application, notify all interested plugins b
 The protocol is divided into two stages.
 The first stage is a two-way handshake where the plugin/client starts.
 
-Client --{ PluginDeclaration }-> Server
-Client <-{   FormatResponse  }-- Server
+	Client --{ PluginDeclaration }-> Server
+	Client <-{  FormatResponse   }-- Server
 
 where PluginDeclaration is a JSON-encoded object with the following fields:
 	name       string
