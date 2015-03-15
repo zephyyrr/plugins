@@ -63,7 +63,7 @@ This stage continues until either side closes the communications channel.
 
 ### Errors ###
 
-#### Transmission Errors ###¤
+#### Transmission Errors ####
 	0: Success
 	1: No common format found during negotiations.
 
