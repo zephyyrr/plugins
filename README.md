@@ -24,6 +24,7 @@ The first stage is a two-way handshake where the plugin/client starts.
 	Client <-{  FormatResponse   }-- Server
 
 where PluginDeclaration is a JSON-encoded object with the following fields:
+
 	name       string
 	subscribes [Event]
 	provides   [Event]
