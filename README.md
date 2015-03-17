@@ -41,6 +41,7 @@ where PluginDeclaration is a JSON-encoded object with the following fields:
 			"bin/gob"
 
 and FormatDeclaration is a JSON encoded object with these fields:
+
 	format Format
 	error Error
 
@@ -50,6 +51,7 @@ where Format is as defined above and Error is a integer error-code as defined in
 The second stage is the communication stage, using the format negotiated in the handshake stage.
 
 This stage use packets on the form
+
 	Event
 	Args
 
