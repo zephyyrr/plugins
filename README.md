@@ -20,10 +20,11 @@ When ever something happens in your application, notify all interested plugins b
 The protocol is divided into two stages.
 The first stage is a two-way handshake where the plugin/client starts.
 
-Client --{ PluginDeclaration }-> Server
-Client <-{   FormatResponse  }-- Server
+	Client --{ PluginDeclaration }-> Server
+	Client <-{  FormatResponse   }-- Server
 
 where PluginDeclaration is a JSON-encoded object with the following fields:
+
 	name       string
 	subscribes [Event]
 	provides   [Event]
@@ -40,6 +41,7 @@ where PluginDeclaration is a JSON-encoded object with the following fields:
 			"bin/gob"
 
 and FormatDeclaration is a JSON encoded object with these fields:
+
 	format Format
 	error Error
 
@@ -49,6 +51,7 @@ where Format is as defined above and Error is a integer error-code as defined in
 The second stage is the communication stage, using the format negotiated in the handshake stage.
 
 This stage use packets on the form
+
 	Event
 	Args
 
@@ -63,7 +66,7 @@ This stage continues until either side closes the communications channel.
 
 ### Errors ###
 
-#### Transmission Errors ###¤
+#### Transmission Errors ####
 	0: Success
 	1: No common format found during negotiations.
 
