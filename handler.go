@@ -19,7 +19,9 @@ type Muxer interface {
 type mapMuxr map[Event]Handler
 
 func (m mapMuxr) HandleEvent(event Event, args Args) {
-	m[event].HandleEvent(event, args)
+	if handler, ok := m[event]; ok {
+		handler.HandleEvent(event, args)
+	}
 }
 
 func (m mapMuxr) AddHandler(event Event, handlr Handler) {
