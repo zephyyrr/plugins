@@ -84,7 +84,7 @@ func (ph Manager) Muxer() Muxer {
 }
 
 func generatefunc(pl Plugin) (func(), <-chan packet, chan<- struct{}) {
-	ch, closer := make(chan packet), make(chan struct{})
+	ch, closer := make(chan packet, 3), make(chan struct{})
 	return func() {
 		defer close(ch)
 
