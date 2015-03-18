@@ -58,7 +58,6 @@ func (ph *Manager) Handle(pl Plugin) {
 			Dir:  reflect.SelectRecv,
 			Chan: rch,
 		})
-
 }
 
 func (ph *Manager) HandleAll(pls ...Plugin) {
@@ -154,6 +153,7 @@ func (ph Manager) Dispatch(e Event, args Args) error {
 }
 
 func (ph Manager) dispatch(identifier string, e Event, args Args) (err error) {
+	ph.Handler().HandleEvent(e, args)
 	for _, plugin := range ph.subscriptions[e] {
 		go func(plugin Plugin) {
 			tmp := plugin.Send(e, args)
