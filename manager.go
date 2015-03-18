@@ -1,10 +1,14 @@
 package plugins
 
 import (
+	"log"
+	"os"
 	"reflect"
 	"runtime"
 	"time"
 )
+
+var logger = log.New(os.Stderr, "[plugins::Manager] ", log.LstdFlags)
 
 type Manager struct {
 	plugins       plugins
@@ -100,7 +104,9 @@ func generatefunc(pl Plugin) (func(), <-chan packet, chan<- struct{}) {
 					case Unblocking:
 						time.Sleep(500 * time.Millisecond)
 					case NotImplemented:
+						fallthrough
 					default:
+						logger.Printf("Encountered a error recieving event from %s: \n%s", pl.Name(), err.Error())
 						return
 					}
 					continue
