@@ -129,12 +129,15 @@ func (ph *Manager) Unload(pl Plugin) {
 }
 
 func (ph *Manager) ListenAndServe() error {
-
-	for len(ph.plugins) > 0 {
+	for {
+		if len(ph.selects) <= 0 {
+			runtime.Gosched()
+			continue
+		}
 		if chosen, recv, ok := reflect.Select(ph.selects); ok {
 			pck := recv.Interface().(packet)
-			ph.Dispatch(pck.Event, pck.Args)
-		} else {
+			ph.dispatch("plugin", pck.Event, pck.Args)
+		} else if chosen >= 0 && chosen < len(ph.selects) {
 			//Not ok
 			//Removing select case from list
 			if chosen == len(ph.selects)-1 {
