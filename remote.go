@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"io"
+	"runtime"
 )
 
 type Encoder interface {
@@ -30,9 +31,9 @@ type formatResponse struct {
 type Format string
 
 var (
-	JSON Format = "text/json"
+	JSON Format = "application/json"
 	GOB  Format = "bin/gob"
-	XML  Format = "text/xml"
+	XML  Format = "application/xml"
 )
 
 type RemotePlugin struct {
@@ -85,6 +86,11 @@ func NewRemotePlugin(r io.ReadCloser, w io.WriteCloser) (pl *RemotePlugin, err e
 	}
 
 	enc.Encode(formatResponse{Format: bestFormat})
+
+	runtime.SetFinalizer(pl, func(pl *RemotePlugin) {
+		pl.r.Close()
+		pl.w.Close()
+	})
 
 	pl.enc, pl.dec = best.Construct(r, w)
 	return
