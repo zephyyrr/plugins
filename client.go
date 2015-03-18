@@ -31,13 +31,6 @@ func NewClient(decl PluginDecl, r io.ReadCloser, w io.WriteCloser) (c *Client, e
 		}
 	}
 
-	if decl.Subscribes == nil {
-		//Perhaps this can be cached.
-		for format := range SupportedFormats {
-			decl.Formats = append(decl.Formats, format)
-		}
-	}
-
 	//Send declaration
 	enc.Encode(decl)
 
