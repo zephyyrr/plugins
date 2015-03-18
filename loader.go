@@ -4,8 +4,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/hashicorp/go-multierror"
 )
 
+//Loads the plugins at the given path
+//Returns a valid plugin or a non-nil error
 func Load(path string) (Plugin, error) {
 	cmd := exec.Command(path)
 	stdin, err := cmd.StdinPipe()
@@ -23,22 +27,39 @@ func Load(path string) (Plugin, error) {
 
 }
 
+//
 func LoadAll(path string) ([]Plugin, error) {
 	dir, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
 	dirinfo, err := dir.Stat()
+	if err != nil {
+		return nil, err
+	}
+
 	if !dirinfo.IsDir() {
 		return nil, NotDirectory
 	}
 
 	files, err := dir.Readdir(0)
-	plugins := make([]Plugin, len(files))
+	if err != nil {
+		return nil, err
+	}
+	plugins := make([]Plugin, 0, len(files))
 	for _, file := range files {
 		if file.IsDir() {
 			continue
 		}
 
 		// Not a directory. A file. Attempt execution
-		Load(filepath.Join(path, file.Name()))
+		pl, pl_err := Load(filepath.Join(path, file.Name()))
+		if err == nil {
+			plugins = append(plugins, pl)
+		} else {
+			err = multierror.Append(err, pl_err)
+		}
 	}
 
 	return plugins, err
