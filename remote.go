@@ -32,7 +32,7 @@ type Format string
 
 var (
 	JSON Format = "application/json"
-	GOB  Format = "bin/gob"
+	GOB  Format = "application/gob"
 	XML  Format = "application/xml"
 )
 
