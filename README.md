@@ -36,9 +36,9 @@ where PluginDeclaration is a JSON-encoded object with the following fields:
 			"tracker.calibration.start"
 
 	Format is a string representation of a MIME type as defined in RFC 2046.
-		Ex: "text/json"
-			"text/xml"
-			"bin/gob"
+		Ex: "application/json"
+			"application/xml"
+			"application/gob"
 
 and FormatDeclaration is a JSON encoded object with these fields:
 
