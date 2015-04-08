@@ -2,15 +2,22 @@ package main
 
 import (
 	"github.com/zephyyrr/plugins"
+	"log"
 	"os"
-	"time"
 )
+
+const Name = "pinger"
+
+func init() {
+	log.SetPrefix(Name)
+}
 
 func main() {
 	client, err := plugins.NewClient(plugins.PluginDecl{
-		Name: "pinger",
+		Name: Name,
 		Provides: []plugins.Event{
 			"ping",
+			"log",
 		},
 		Subscribes: []plugins.Event{
 			"pong",
@@ -21,20 +28,38 @@ func main() {
 		panic(err)
 	}
 
+	i := 1
+
 	client.AddHandler("pong", plugins.HandlerFunc(func(e plugins.Event, args plugins.Args) {
-		client.Dispatch("log", plugins.Args{
-			"Level":         "INFO",
-			"Event":         "ping",
-			"Reponse-Event": "pong",
+		err := client.Dispatch("log",
+			plugins.Args{
+				"Level":      "INFO",
+				"Origin":     Name,
+				"Message":    "Recieved event",
+				"Additional": CallResponse{"ping", e},
+			})
+		if err != nil {
+			log.Panicln(err)
+		}
+		//time.Sleep(200 * time.Millisecond)
+
+		i++
+		client.Dispatch("ping", plugins.Args{
+			"message": "Additional ping from another process",
+			"count":   i,
 		})
+
 	}))
 
 	go client.Run()
 
-	for {
-		client.Dispatch("ping", plugins.Args{
-			"message": "Ping from another process",
-		})
-		time.Sleep(20 * time.Millisecond)
-	}
+	client.Dispatch("ping", plugins.Args{
+		"message": "First ping from another process",
+	})
+
+	select {}
+}
+
+type CallResponse struct {
+	In, Out plugins.Event
 }
