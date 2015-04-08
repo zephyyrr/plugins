@@ -10,6 +10,9 @@ import (
 
 var logger = log.New(os.Stderr, "[plugins::Manager] ", log.LstdFlags)
 
+//A plugin manager
+//Manages plugins by routing events between them.
+//Also allows a local handler to recieve the events and react to them.
 type Manager struct {
 	plugins       plugins
 	closers       map[string]chan<- struct{}
@@ -37,7 +40,14 @@ type packet struct {
 	Args  Args
 }
 
+//Registers a plugin to be handled by the handler.
+//The name of the plugin must be unique
 func (ph *Manager) Handle(pl Plugin) {
+	if _, ok := ph.plugins[pl.Name()]; ok {
+		//Already exists
+		panic(DuplicatePlugin)
+	}
+
 	ph.plugins[pl.Name()] = pl
 
 	for _, sub := range pl.Subscribes() {
@@ -60,17 +70,24 @@ func (ph *Manager) Handle(pl Plugin) {
 		})
 }
 
+//Convenience method
+//Equivalent to calling Handle on all plugins individually
 func (ph *Manager) HandleAll(pls ...Plugin) {
 	for _, pl := range pls {
 		ph.Handle(pl)
 	}
 }
 
+//Returns the current handler used.
 func (ph Manager) Handler() Handler {
 	return ph.handler
 }
 
-func (ph Manager) SetHandler(h Handler) {
+//Sets the handler to be used.
+func (ph *Manager) SetHandler(h Handler) {
+	if h == nil {
+		return
+	}
 	ph.handler = h
 }
 
@@ -117,7 +134,9 @@ func generatefunc(pl Plugin) (func(), <-chan packet, chan<- struct{}) {
 	}, ch, closer
 }
 
-func (ph *Manager) Unload(pl Plugin) {
+//Unhandles the plugin.
+//The plugin will not recieve future events.
+func (ph *Manager) Unhandle(pl Plugin) {
 	close(ph.closers[pl.Name()])
 	delete(ph.closers, pl.Name())
 
@@ -147,10 +166,10 @@ func (ph *Manager) ListenAndServe() error {
 			}
 		}
 	}
-
-	return nil
 }
 
+//Introduces a new event into the handler for processing
+//and sending to relevant plugins.
 func (ph Manager) Dispatch(e Event, args Args) error {
 	return ph.dispatch("local", e, args)
 }
