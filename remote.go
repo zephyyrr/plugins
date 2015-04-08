@@ -50,7 +50,7 @@ type FormatFactory struct {
 }
 
 var SupportedFormats = map[Format]FormatFactory{
-	GOB:  FormatFactory{100, gobFactory},
+	//GOB:  FormatFactory{100, gobFactory},
 	JSON: FormatFactory{50, jsonFactory},
 	XML:  FormatFactory{0, xmlFactory},
 }
