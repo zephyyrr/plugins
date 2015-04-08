@@ -2,12 +2,14 @@ package main
 
 import (
 	"github.com/zephyyrr/plugins"
+	"github.com/zephyyrr/plugins/structhandler"
 	"log"
 	"net"
+	"time"
 )
 
 func init() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetFlags(log.LstdFlags)
 }
 
 func main() {
@@ -15,6 +17,7 @@ func main() {
 
 	if pls, err := plugins.LoadAll("./plugins"); err == nil {
 		for _, pl := range pls {
+			log.Printf("%s, Provides: %v, Subscribes: %v", pl.Name(), pl.Provides(), pl.Subscribes())
 			ph.Handle(pl)
 		}
 	} else {
@@ -24,12 +27,11 @@ func main() {
 	go openTCPEntrance(ph, ":5436")
 
 	ph.Muxer().AddHandler("ping", plugins.HandlerFunc(func(event plugins.Event, args plugins.Args) {
+		Log(LogEntry{"DEBUG", "main", "Recieved ping", args})
 		ph.Dispatch("pong", args)
 	}))
 
-	ph.Muxer().AddHandler("log", plugins.HandlerFunc(func(event plugins.Event, args plugins.Args) {
-		log.Printf("(%s): %v", event, args)
-	}))
+	ph.Muxer().AddHandler("log", structhandler.New(Log))
 
 	ph.Muxer().AddHandler("square", plugins.HandlerFunc(func(event plugins.Event, args plugins.Args) {
 		if x, ok := args["Argument"].(int); ok {
@@ -40,7 +42,23 @@ func main() {
 		}
 	}))
 
+	go func() {
+		for {
+			time.Sleep(10 * time.Second)
+			ph.Dispatch("ping", nil)
+		}
+	}()
+
 	ph.ListenAndServe()
+}
+
+type LogEntry struct {
+	Level, Origin, Message string
+	Additional             map[string]interface{}
+}
+
+func Log(le LogEntry) {
+	log.Printf("[%s] (%s) %s : %v", le.Level, le.Origin, le.Message, le.Additional)
 }
 
 func openTCPEntrance(man *plugins.Manager, addr string) {
