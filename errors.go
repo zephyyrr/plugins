@@ -24,6 +24,7 @@ var errors = map[Error]string{
 	Unblocking:        "This is a unblocking recieve",
 	NotImplemented:    "Operation is not implemented",
 	NotDirectory:      "Path supplied is not a directory",
+	DuplicatePlugin:   "Plugin is a duplicate. Already handled.",
 }
 
 //Transmission errors
@@ -37,4 +38,5 @@ const (
 	Unblocking Error = 100 + iota
 	NotImplemented
 	NotDirectory
+	DuplicatePlugin
 )
