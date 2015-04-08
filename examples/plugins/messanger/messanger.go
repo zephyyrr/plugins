@@ -20,10 +20,10 @@ func main() {
 
 	go client.Run()
 
-	for {
-		client.Dispatch("log", plugins.Args{
-			"info": "Remote pluging through stdin/stdout is connected.",
-		})
-		time.Sleep(1000 * time.Millisecond)
-	}
+	client.Dispatch("log", plugins.Args{
+		"Level":   "INFO",
+		"Origin":  "messanger",
+		"Message": "Remote pluging through stdin/stdout is connected.",
+	})
+	time.Sleep(1000 * time.Millisecond)
 }
