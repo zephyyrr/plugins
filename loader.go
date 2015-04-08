@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,6 +20,11 @@ func Load(path string) (Plugin, error) {
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
+	}
+
+	stderr, err := cmd.StderrPipe()
+	if err == nil {
+		go io.Copy(os.Stderr, stderr)
 	}
 
 	go cmd.Start()
